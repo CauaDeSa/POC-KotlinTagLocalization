@@ -15,33 +15,49 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkPermissions()
-
-        goToQRActivity()
     }
 
     private fun checkPermissions() {
-        val fineLocation = Manifest.permission.ACCESS_FINE_LOCATION
         val permissionsToRequest = mutableListOf<String>()
 
-        if (ActivityCompat.checkSelfPermission(this, fineLocation) != PackageManager.PERMISSION_GRANTED)
-            permissionsToRequest.add(fineLocation)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val backgroundLocation = Manifest.permission.ACCESS_BACKGROUND_LOCATION
-
-            if (ActivityCompat.checkSelfPermission(this, backgroundLocation) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, fineLocation) == PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(backgroundLocation)
-            }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
-        if (permissionsToRequest.isNotEmpty())
-            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), PERMISSION_REQUEST_CODE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+        } else {
+            navigateBySession()
+        }
     }
 
-    private fun goToQRActivity() {
-        val intent = Intent(this, QRActivity::class.java)
+    private fun navigateBySession() {
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        val sessionId = prefs.getString("SESSION_ID", null)
+
+        if (sessionId != null) {
+            goToActivity<VPNActivity>(VPNActivity::class.java, sessionId)
+        } else {
+            goToActivity<QRActivity>(QRActivity::class.java)
+        }
+    }
+
+    private fun <T> goToActivity(activity: Class<T>, currentTagId: String? = null) {
+        val intent = Intent(this, activity)
+        intent.putExtra("tagId", currentTagId)
         startActivity(intent)
         finish()
     }
@@ -52,8 +68,8 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            goToQRActivity()
-        }
+        if (requestCode == PERMISSION_REQUEST_CODE)
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED })
+                navigateBySession()
     }
 }

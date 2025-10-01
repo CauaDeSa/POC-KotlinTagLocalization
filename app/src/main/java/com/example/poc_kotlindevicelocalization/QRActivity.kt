@@ -30,6 +30,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.WriterException
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import java.util.UUID
+import androidx.core.content.edit
 
 class QRActivity : AppCompatActivity() {
 
@@ -49,7 +50,15 @@ class QRActivity : AppCompatActivity() {
     }
 
     private fun createTag() {
-        currentTagId = UUID.randomUUID().toString()
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        val sessionId = prefs.getString("SESSION_ID", null)
+
+        if (sessionId != null)
+            currentTagId = sessionId
+        else {
+            currentTagId = UUID.randomUUID().toString()
+            prefs.edit { putString("SESSION_ID", currentTagId) }
+        }
 
         val tagData = hashMapOf(
             "latitude" to 0.0,
@@ -117,7 +126,8 @@ fun QRScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Image(bitmap = bitmap.asImageBitmap(),
+        Image(
+            bitmap = bitmap.asImageBitmap(),
             contentDescription = "QR Code",
             modifier = Modifier
                 .width(300.dp)

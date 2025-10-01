@@ -56,11 +56,18 @@ class LocationService : Service() {
             manager.createNotificationChannel(channel)
         }
 
-        val notificationIntent = Intent(this, VPNActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        val notificationIntent = Intent(this, VPNActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("tagId", tagId)
+        }
+
+        val pendingIntent = androidx.core.app.TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(notificationIntent)
+            getPendingIntent(
+                0,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Rastreamento ativo")

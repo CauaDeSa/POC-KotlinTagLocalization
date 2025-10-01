@@ -1,9 +1,6 @@
 package com.example.poc_kotlindevicelocalization
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +11,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.MyLocation
@@ -38,8 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -91,12 +90,6 @@ class VPNActivity : ComponentActivity() {
         firestore.collection("tags").document(tagId)
             .update("trackingEnabled", trackingEnabled)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
-            }
-        }
-
         if (trackingEnabled) startService(
             Intent(this, LocationService::class.java).apply {
                 putExtra("tagId", tagId)
@@ -116,8 +109,6 @@ fun VPNLayout(
     trackingEnabled: Boolean,
     onToggleTracking: () -> Unit
 ) {
-    val spacerHeight = if (trackingEnabled) 240.dp else 264.dp
-
     val infiniteTransition = rememberInfiniteTransition()
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -135,59 +126,73 @@ fun VPNLayout(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.2f))
 
         Text(
             text = tagName,
-            fontSize = 24.sp,
-            color = Color.Black,
+            fontSize = adaptiveFontSize(21),
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            color = Color.Black,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(spacerHeight))
+        Spacer(modifier = Modifier.weight(0.3f))
 
-        Icon(
-            imageVector = if (trackingEnabled) Icons.Default.MyLocation else Icons.Default.LocationOff,
-            contentDescription = "Ícone de Localização",
-            tint = if (trackingEnabled) Color(0xFF2196F3) else Color.Gray,
+        Box(
             modifier = Modifier
-                    .size(
-                        if (trackingEnabled) 96.dp else 48.dp
-                    )
+                .size(120.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (trackingEnabled) Icons.Default.MyLocation else Icons.Default.LocationOff,
+                contentDescription = "Ícone de Localização",
+                tint = if (trackingEnabled) Color(0xFF2196F3) else Color.Gray,
+                modifier = Modifier
+                    .size(if (trackingEnabled) 96.dp else 48.dp)
                     .graphicsLayer(
                         scaleX = if (trackingEnabled) scale else 1f,
-                        scaleY = if (trackingEnabled) scale else 1f)
-        )
+                        scaleY = if (trackingEnabled) scale else 1f
+                    )
+            )
+        }
 
-        Spacer(modifier = Modifier.height(spacerHeight))
+        Spacer(modifier = Modifier.weight(0.3f))
 
         Button(
             onClick = onToggleTracking,
             modifier = Modifier
-                .width(250.dp)
-                .height(60.dp),
+                .fillMaxWidth(0.8f)
+                .height(64.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (trackingEnabled) Color(0xFF4CAF50) else Color(0xFFF44336)
             )
         ) {
             Text(
                 text = if (trackingEnabled) "Rastreamento Ativo" else "Ativar Rastreamento",
-                fontSize = 18.sp,
+                fontSize = adaptiveFontSize(15),
                 color = Color.White
             )
         }
 
-        Spacer(modifier = Modifier.weight(0.3f))
+        Spacer(modifier = Modifier.weight(0.1f))
 
         Text(
             text = location,
-            fontSize = 18.sp,
+            fontSize = adaptiveFontSize(15),
             color = Color.DarkGray,
             textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(bottom = 76.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.weight(0.1f))
     }
+}
+
+@Composable
+fun adaptiveFontSize(baseSp: Int): TextUnit {
+    val config = LocalConfiguration.current
+    val screenWidth = config.screenWidthDp
+    val factor = screenWidth / 360f
+    return (baseSp * factor).sp
 }
