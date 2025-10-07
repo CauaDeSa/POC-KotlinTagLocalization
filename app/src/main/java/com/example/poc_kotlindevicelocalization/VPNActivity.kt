@@ -2,6 +2,7 @@ package com.example.poc_kotlindevicelocalization
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.EaseIn
@@ -61,13 +62,22 @@ class VPNActivity : ComponentActivity() {
 
         tagListener = firestore.collection("tags").document(tagId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                snapshot?.let {
-                    tagName = it.getString("name") ?: "Tag não atribuída"
-                    val lat = it.getDouble("latitude") ?: 0.0
-                    val lon = it.getDouble("longitude") ?: 0.0
+                if (error != null) {
+                    Toast.makeText(this, "Erro ao buscar dados: ${error.message}", Toast.LENGTH_LONG).show()
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    tagName = snapshot.getString("name") ?: "Tag sem nome"
+                    val lat = snapshot.getDouble("latitude") ?: 0.0
+                    val lon = snapshot.getDouble("longitude") ?: 0.0
                     locationText = "Localização: $lat, $lon"
-                    trackingEnabled = it.getBoolean("trackingEnabled") == true
+                    trackingEnabled = snapshot.getBoolean("trackingEnabled") == true
+                } else {
+                    Toast.makeText(this, "Tag não encontrada.", Toast.LENGTH_LONG).show()
+                    val intent = Intent(this, QRActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 }
             }
 
@@ -98,7 +108,8 @@ class VPNActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        tagListener.remove()
+        if (::tagListener.isInitialized)
+            tagListener.remove()
     }
 }
 
