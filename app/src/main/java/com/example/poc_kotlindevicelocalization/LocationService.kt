@@ -56,7 +56,7 @@ class LocationService : Service() {
             manager.createNotificationChannel(channel)
         }
 
-        val notificationIntent = Intent(this, VPNActivity::class.java).apply {
+        val notificationIntent = Intent(this, TagActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("tagId", tagId)
         }

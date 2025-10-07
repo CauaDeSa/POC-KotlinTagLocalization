@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         val sessionId = prefs.getString("SESSION_ID", null)
 
         if (sessionId != null) {
-            goToActivity<VPNActivity>(VPNActivity::class.java, sessionId)
+            goToActivity<TagActivity>(TagActivity::class.java, sessionId)
         } else {
             goToActivity<QRActivity>(QRActivity::class.java)
         }

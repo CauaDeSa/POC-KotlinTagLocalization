@@ -30,7 +30,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.WriterException
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import java.util.UUID
-import androidx.core.content.edit
 
 class QRActivity : AppCompatActivity() {
 
@@ -53,12 +52,7 @@ class QRActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
         val sessionId = prefs.getString("SESSION_ID", null)
 
-        if (sessionId != null)
-            currentTagId = sessionId
-        else {
-            currentTagId = UUID.randomUUID().toString()
-            prefs.edit { putString("SESSION_ID", currentTagId) }
-        }
+        currentTagId = sessionId ?: UUID.randomUUID().toString()
 
         val tagData = hashMapOf(
             "latitude" to 0.0,
@@ -76,9 +70,10 @@ class QRActivity : AppCompatActivity() {
 
                         if (snapshot != null && snapshot.exists()) {
                             val nome = snapshot.getString("name")
+                            val description = snapshot.getString("description")
 
-                            if (!nome.isNullOrBlank()) {
-                                val intent = Intent(this, VPNActivity::class.java)
+                            if (!nome.isNullOrBlank() && !description.isNullOrBlank()) {
+                                val intent = Intent(this, TagActivity::class.java)
                                 intent.putExtra("tagId", currentTagId)
                                 startActivity(intent)
                                 finish()

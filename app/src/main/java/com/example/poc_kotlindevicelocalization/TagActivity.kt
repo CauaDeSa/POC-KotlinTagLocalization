@@ -42,10 +42,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
-class VPNActivity : ComponentActivity() {
+class TagActivity : ComponentActivity() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private lateinit var tagListener: ListenerRegistration
@@ -59,6 +60,9 @@ class VPNActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         tagId = intent?.getStringExtra("tagId")?: return
+
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        prefs.edit { putString("SESSION_ID", tagId) }
 
         tagListener = firestore.collection("tags").document(tagId)
             .addSnapshotListener { snapshot, error ->
@@ -75,6 +79,8 @@ class VPNActivity : ComponentActivity() {
                     trackingEnabled = snapshot.getBoolean("trackingEnabled") == true
                 } else {
                     Toast.makeText(this, "Tag não encontrada.", Toast.LENGTH_LONG).show()
+                    val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+                    prefs.edit { putString("SESSION_ID", null) }
                     val intent = Intent(this, QRActivity::class.java)
                     startActivity(intent)
                     finish()

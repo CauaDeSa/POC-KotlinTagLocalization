@@ -37,7 +37,7 @@
 
         <activity android:name=".QRActivity" />
         <activity
-            android:name=".VPNActivity"
+            android:name=".TagActivity"
             android:launchMode="singleTop"/>
 
     </application>
